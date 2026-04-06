@@ -735,6 +735,32 @@
       const id = url.match(/vimeo\.com\/(\d+)/)?.[1];
       return id ? `https://vumbnail.com/${id}.jpg` : null;
     }
+
+      // Async Vimeo thumbnail component using oEmbed API
+      const vimeoThumbCache = {};
+      function VimeoThumbnail({ url, style, className }) {
+        const [src, setSrc] = React.useState(null);
+        const id = React.useMemo(() => url.match(/vimeo\.com\/(\d+)/)?.[1], [url]);
+        React.useEffect(() => {
+          if (!id) return;
+          if (vimeoThumbCache[id]) { setSrc(vimeoThumbCache[id]); return; }
+          fetch('https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(url))
+            .then(r => r.json())
+            .then(data => {
+              if (data.thumbnail_url) {
+                const thumb = data.thumbnail_url.replace(/_\d+x\d+/, '_640x360');
+                vimeoThumbCache[id] = thumb;
+                setSrc(thumb);
+              }
+            })
+            .catch(() => {});
+        }, [url, id]);
+        if (!src) return React.createElement('div', {style: {...style, display:'flex',alignItems:'center',justifyContent:'center'}},
+          React.createElement('span', {style:{color:'#666',fontSize:'12px'}}, 'Loading...')
+        );
+        return React.createElement('img', { src, style, className });
+      }
+
     function getYouTubeThumb(url) {
       const id = url.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([a-zA-Z0-9_-]+)/)?.[1];
       return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
@@ -746,7 +772,10 @@
 
       React.useEffect(() => {
         if (media.type === 'vimeo') {
-          setThumb(getVimeoThumb(media.url));
+          fetch('https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(media.url))
+            .then(function(r) { return r.json(); })
+            .then(function(data) { if (data.thumbnail_url) setThumb(data.thumbnail_url); else setThumb(getVimeoThumb(media.url)); })
+            .catch(function() { setThumb(getVimeoThumb(media.url)); });
         } else if (media.type === 'youtube_link') {
           setThumb(getYouTubeThumb(media.url));
         }
