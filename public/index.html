@@ -842,10 +842,13 @@
       const [newComment, setNewComment] = useState('');
       const [mediaIndex, setMediaIndex] = useState(0);
       const [editing, setEditing] = useState(false);
+      const [editMediaUrl, setEditMediaUrl] = useState('');
+      const [editMediaType, setEditMediaType] = useState('image');
       const [editData, setEditData] = useState({
         title: post.title, caption: post.caption || '', hashtags: post.hashtags || '',
         platform: post.platform, aspect_ratio: post.aspect_ratio, status: post.status,
-        priority: post.priority, scheduled_date: post.scheduled_date || ''
+        priority: post.priority, scheduled_date: post.scheduled_date || '',
+        media_items: (post.media || []).map(m => ({ type: m.type, url: m.url, filename: m.filename || '' }))
       });
 
       useEffect(() => {
@@ -1011,6 +1014,30 @@
                         <label className="form-label">Scheduled Date</label>
                         <input className="form-input" type="datetime-local" value={editData.scheduled_date ? editData.scheduled_date.slice(0,16) : ''} onChange={e => setEditData({...editData, scheduled_date: e.target.value})} />
                       </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Media</label>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                        <select className="form-select" style={{ width: 120 }} value={editMediaType} onChange={e => setEditMediaType(e.target.value)}>
+                          <option value="image">Image URL</option>
+                          <option value="video">Video URL</option>
+                          <option value="vimeo">Vimeo</option>
+                          <option value="youtube_link">YouTube</option>
+                        </select>
+                        <input className="form-input" placeholder="Paste media URL..." value={editMediaUrl} onChange={e => setEditMediaUrl(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (!editMediaUrl.trim()) return; let t = editMediaType; if (editMediaUrl.includes('vimeo.com')) t = 'vimeo'; if (editMediaUrl.includes('youtube.com') || editMediaUrl.includes('youtu.be')) t = 'youtube_link'; setEditData(d => ({...d, media_items: [...d.media_items, {type: t, url: editMediaUrl.trim(), filename: ''}]})); setEditMediaUrl(''); }}} />
+                        <button type="button" className="btn btn-primary btn-sm" onClick={() => { if (!editMediaUrl.trim()) return; let t = editMediaType; if (editMediaUrl.includes('vimeo.com')) t = 'vimeo'; if (editMediaUrl.includes('youtube.com') || editMediaUrl.includes('youtu.be')) t = 'youtube_link'; setEditData(d => ({...d, media_items: [...d.media_items, {type: t, url: editMediaUrl.trim(), filename: ''}]})); setEditMediaUrl(''); }}>Add</button>
+                      </div>
+                      {editData.media_items.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {editData.media_items.map((m, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--card-bg)', padding: '6px 10px', borderRadius: 8, fontSize: 12 }}>
+                              <span className={`status-badge status-${m.type === 'vimeo' ? 'approved' : m.type === 'youtube_link' ? 'rejected' : 'pending'}`} style={{ fontSize: 10 }}>{m.type}</span>
+                              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>{m.url}</span>
+                              <button type="button" style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 16, padding: '0 4px' }} onClick={() => setEditData(d => ({...d, media_items: d.media_items.filter((_, idx) => idx !== i)}))}>&times;</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -1422,6 +1449,17 @@
         } catch (err) { console.error(err); }
       }
 
+      async function handleBulkDelete() {
+        const count = selectedPosts.size;
+        if (!confirm(`Are you sure you want to delete ${count} post${count > 1 ? 's' : ''}? This cannot be undone.`)) return;
+        try {
+          const ids = Array.from(selectedPosts);
+          await Promise.all(ids.map(id => api(`/posts/${id}`, { method: 'DELETE' })));
+          setSelectedPosts(new Set());
+          loadPosts();
+        } catch (err) { console.error(err); }
+      }
+
       function toggleSelect(id) {
         setSelectedPosts(prev => {
           const next = new Set(prev);
@@ -1709,6 +1747,7 @@
                 <button className="btn btn-success btn-sm" onClick={() => handleBulkAction('approve')}>{Icons.thumbUp} Approve All</button>
                 <button className="btn btn-danger btn-sm" onClick={() => handleBulkAction('reject')}>{Icons.thumbDown} Reject All</button>
                 <button className="btn btn-ghost btn-sm" onClick={() => handleBulkAction('needs_revision')}>Request Revision</button>
+                <button className="btn btn-danger btn-sm" onClick={handleBulkDelete} style={{ marginLeft: 8 }}>{Icons.trash} Delete</button>
                 <button className="btn btn-ghost btn-sm" onClick={() => setSelectedPosts(new Set())}>{Icons.close} Clear</button>
               </div>
             )}
