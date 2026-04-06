@@ -132,6 +132,35 @@ router.get('/users', authenticateToken, requireRole('super_admin', 'manager'), (
   }
 });
 
+// PUT /api/auth/users/:id (Super Admin - edit user)
+router.put('/users/:id', authenticateToken, requireRole('super_admin'), (req, res) => {
+  try {
+    const db = getDb();
+    const { name, email, role } = req.body;
+    const user = db.prepare("SELECT id FROM users WHERE id = ?").get(req.params.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    db.prepare("UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?").run(name, email, role, req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Update user error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// DELETE /api/auth/users/:id (Super Admin - delete user)
+router.delete('/users/:id', authenticateToken, requireRole('super_admin'), (req, res) => {
+  try {
+    const db = getDb();
+    const user = db.prepare("SELECT id FROM users WHERE id = ?").get(req.params.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (req.params.id === req.user.id) return res.status(400).json({ error: "Cannot delete yourself" });
+    db.prepare("DELETE FROM users WHERE id = ?").run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete user error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 // POST /api/auth/client-orgs (Super Admin)
 router.post('/client-orgs', authenticateToken, requireRole('super_admin', 'manager'), (req, res) => {
   try {
