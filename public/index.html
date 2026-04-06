@@ -842,7 +842,7 @@
       const ratioClass = `ratio-${(post.aspect_ratio || '9:16').replace(':', '-')}`;
       const isVertical = (post.aspect_ratio || '9:16') === '9:16';
       const cardRef = React.useRef(null);
-      React.useEffect(() => { if (isVertical && cardRef.current) { const img = cardRef.current.querySelector('.card-media img'); if (img) { const apply = () => { const bd = cardRef.current.querySelector('.card-blur-bg'); if (bd && img.src) bd.style.backgroundImage = 'url(' + img.src + ')'; }; if (img.complete && img.src) apply(); else img.addEventListener('load', apply); } } });
+      React.useEffect(() => { if (!isVertical || !cardRef.current) return; const media = cardRef.current.querySelector('.card-media'); const bd = media && media.querySelector('.card-blur-bg'); if (!media || !bd) return; const applyBlur = () => { const img = media.querySelector('img'); if (img && img.src) { const set = () => { bd.style.backgroundImage = 'url(' + img.src + ')'; }; if (img.complete) set(); else img.addEventListener('load', set); } }; applyBlur(); const obs = new MutationObserver(applyBlur); obs.observe(media, { childList: true, subtree: true }); return () => obs.disconnect(); });
 
       function getMediaPreview() {
         if (!media) {
