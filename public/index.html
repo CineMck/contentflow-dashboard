@@ -1834,7 +1834,7 @@
 
       async function loadUsers() {
         try {
-          var res = await fetch("/api/auth/users", { headers: authHeaders() });
+          var res = await api("/api/auth/users");
           var data = await res.json();
           setUsers(data);
         } catch(err) { console.error(err); }
@@ -1843,11 +1843,7 @@
       async function handleAddUser(e) {
         e.preventDefault();
         try {
-          await fetch("/api/auth/users", {
-            method: "POST",
-            headers: Object.assign({}, authHeaders(), { "Content-Type": "application/json" }),
-            body: JSON.stringify(form)
-          });
+          await api("/api/auth/register", { method: "POST", body: JSON.stringify(form) });
           setForm({ email: "", password: "", name: "", role: "client" });
           setShowAdd(false);
           loadUsers();
@@ -1857,11 +1853,7 @@
       async function handleEditUser(e) {
         e.preventDefault();
         try {
-          await fetch("/api/auth/users/" + editingUser.id, {
-            method: "PUT",
-            headers: Object.assign({}, authHeaders(), { "Content-Type": "application/json" }),
-            body: JSON.stringify(editForm)
-          });
+          await api("/api/auth/users/" + editingUser.id, { method: "PUT", body: JSON.stringify(editForm) });
           setEditingUser(null);
           loadUsers();
         } catch(err) { console.error(err); }
@@ -1870,7 +1862,7 @@
       async function handleDeleteUser(uid) {
         if (!confirm("Delete this user? This cannot be undone.")) return;
         try {
-          await fetch("/api/auth/users/" + uid, { method: "DELETE", headers: authHeaders() });
+          await api("/api/auth/users/" + uid, { method: "DELETE" });
           loadUsers();
         } catch(err) { console.error(err); }
       }
@@ -1915,7 +1907,7 @@
           React.createElement("h2", { style: { fontSize: "20px", fontWeight: "600" } }, "Users"),
           currentUser.role === "super_admin" && React.createElement("button", { className: "btn-primary", onClick: function() { setShowAdd(!showAdd); } }, showAdd ? "Cancel" : "+ Add User")
         ),
-        showAdd && React.createElement("form", { onSubmit: handleAddUser, className: "add-user-form", style: { marginBottom: "24px", padding: "20px", background: "var(--bg-secondary)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "12px" } },
+        showAdd && React.createElement("form", { onSubmit: handleAddUser, style: { marginBottom: "24px", padding: "20px", background: "var(--bg-secondary)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "12px" } },
           React.createElement("input", { type: "text", placeholder: "Name", value: form.name, onChange: function(e) { setForm(Object.assign({}, form, { name: e.target.value })); }, style: { padding: "10px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: "14px" } }),
           React.createElement("input", { type: "email", placeholder: "Email", value: form.email, onChange: function(e) { setForm(Object.assign({}, form, { email: e.target.value })); }, required: true, style: { padding: "10px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: "14px" } }),
           React.createElement("input", { type: "password", placeholder: "Password", value: form.password, onChange: function(e) { setForm(Object.assign({}, form, { password: e.target.value })); }, required: true, style: { padding: "10px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: "14px" } }),
@@ -1926,7 +1918,7 @@
           ),
           React.createElement("button", { type: "submit", className: "btn-primary", style: { alignSelf: "flex-start" } }, "Create User")
         ),
-        React.createElement("div", { className: "user-list", style: { display: "flex", flexDirection: "column", gap: "8px" } },
+        React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: "8px" } },
           users.map(function(u) {
             return React.createElement("div", { key: u.id, style: { display: "flex", alignItems: "center", padding: "14px 16px", background: "var(--bg-secondary)", borderRadius: "10px", gap: "14px" } },
               React.createElement("div", { style: { width: "40px", height: "40px", borderRadius: "50%", background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: "600", fontSize: "16px", flexShrink: 0 } }, (u.name || u.email || "?").charAt(0).toUpperCase()),
