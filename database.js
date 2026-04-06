@@ -3,7 +3,12 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 
-const DB_PATH = path.join(__dirname, 'dashboard.db');
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'dashboard.db');
+
+// Ensure the directory for the DB file exists (needed for Railway volumes)
+const fs = require('fs');
+const dbDir = path.dirname(DB_PATH);
+if (!fs.existsSync(dbDir)) { fs.mkdirSync(dbDir, { recursive: true }); }
 
 let db;
 
