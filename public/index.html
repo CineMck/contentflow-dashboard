@@ -813,7 +813,7 @@
         if (media.type === 'vimeo') {
           fetch('https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(media.url))
             .then(function(r) { return r.json(); })
-            .then(function(data) { if (data.thumbnail_url) setThumb(data.thumbnail_url); else setThumb(getVimeoThumb(media.url)); })
+            .then(function(data) { if (data.thumbnail_url) { var t = data.thumbnail_url.replace(/_\d+x\d+/, '_1280x720'); setThumb(t); } else setThumb(getVimeoThumb(media.url)); })
             .catch(function() { setThumb(getVimeoThumb(media.url)); });
         } else if (media.type === 'youtube_link') {
           setThumb(getYouTubeThumb(media.url));
