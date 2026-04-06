@@ -736,7 +736,7 @@
       return id ? `https://vumbnail.com/${id}.jpg` : null;
     }
     function getYouTubeThumb(url) {
-      const id = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
+      const id = url.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([a-zA-Z0-9_-]+)/)?.[1];
       return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
     }
 
@@ -897,11 +897,13 @@
           return <div className="card-media-placeholder" style={{ padding: 60 }}>{Icons.media}<span>No media attached</span></div>;
         }
         if (currentMedia.type === 'vimeo') {
-          const vimeoId = currentMedia.url.match(/vimeo\.com\/(\d+)/)?.[1] || currentMedia.url;
+          const vimeoMatch = currentMedia.url.match(/vimeo\.com\/(\d+)(?:\/([a-f0-9]+))?/);
+          const vimeoId = vimeoMatch ? vimeoMatch[1] : currentMedia.url;
+          const vimeoHash = vimeoMatch ? vimeoMatch[2] : null;
           return (
             <iframe
               key={`vimeo-${vimeoId}`}
-              src={`https://player.vimeo.com/video/${vimeoId}?badge=0&autopause=0&player_id=0`}
+              src={`https://player.vimeo.com/video/${vimeoId}?${vimeoHash ? 'h=' + vimeoHash + '&' : ''}badge=0&autopause=0&player_id=0`}
               style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
               allow="autoplay; fullscreen; picture-in-picture"
               allowFullScreen
@@ -911,7 +913,7 @@
           );
         }
         if (currentMedia.type === 'youtube_link') {
-          const ytId = currentMedia.url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1] || currentMedia.url;
+          const ytId = currentMedia.url.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([a-zA-Z0-9_-]+)/)?.[1] || currentMedia.url;
           return (
             <iframe
               key={`yt-${ytId}`}
