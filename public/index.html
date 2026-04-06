@@ -250,9 +250,7 @@
     .post-card.card-vertical { position: relative; overflow: hidden; height: 560px; }
     .post-card.card-vertical .card-media { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     .post-card.card-vertical .card-media.ratio-9-16 { height: 100%; }
-    .post-card.card-vertical .card-media img, .post-card.card-vertical .card-media video { object-fit: contain !important; }
-    .card-blur-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(20px) brightness(0.6); transform: scale(1.1); z-index: 0; }
-    .post-card.card-vertical .card-media img, .post-card.card-vertical .card-media video { position: relative; z-index: 1; }
+    .post-card.card-vertical .card-media img, .post-card.card-vertical .card-media video { object-fit: cover; }
     .post-card.card-vertical .card-body {
       position: absolute; bottom: 0; left: 0; right: 0;
       background: linear-gradient(transparent, rgba(0,0,0,0.85));
@@ -295,9 +293,6 @@
     }
     .video-thumb-wrap img {
       width: 100%; height: 100%; object-fit: cover;
-    }
-    .post-card.card-vertical .video-thumb-wrap img {
-      object-fit: contain !important;
     }
     .video-play-overlay {
       position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
@@ -813,7 +808,7 @@
         if (media.type === 'vimeo') {
           fetch('https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(media.url))
             .then(function(r) { return r.json(); })
-            .then(function(data) { if (data.thumbnail_url) { var t = data.thumbnail_url.replace(/_\d+x\d+/, '_1280x720'); setThumb(t); } else setThumb(getVimeoThumb(media.url)); })
+            .then(function(data) { if (data.thumbnail_url) { var tw = data.width || 1280; var th = data.height || 720; var t = data.thumbnail_url.replace(/_\d+x\d+/, '_' + tw + 'x' + th); setThumb(t); } else setThumb(getVimeoThumb(media.url)); })
             .catch(function() { setThumb(getVimeoThumb(media.url)); });
         } else if (media.type === 'youtube_link') {
           setThumb(getYouTubeThumb(media.url));
@@ -844,8 +839,6 @@
       const media = post.media && post.media[0];
       const ratioClass = `ratio-${(post.aspect_ratio || '9:16').replace(':', '-')}`;
       const isVertical = (post.aspect_ratio || '9:16') === '9:16';
-      const cardRef = React.useRef(null);
-      React.useEffect(() => { if (!isVertical || !cardRef.current) return; const media = cardRef.current.querySelector('.card-media'); const bd = media && media.querySelector('.card-blur-bg'); if (!media || !bd) return; const applyBlur = () => { const img = media.querySelector('img'); if (img && img.src) { const set = () => { bd.style.backgroundImage = 'url(' + img.src + ')'; }; if (img.complete) set(); else img.addEventListener('load', set); } }; applyBlur(); const obs = new MutationObserver(applyBlur); obs.observe(media, { childList: true, subtree: true }); return () => obs.disconnect(); });
 
       function getMediaPreview() {
         if (!media) {
@@ -866,9 +859,8 @@
       }
 
       return (
-        <div ref={cardRef} className={`post-card fade-in ${selected ? 'selected' : ''} ${isVertical ? 'card-vertical' : ''}`} onClick={() => onClick(post)} onTouchStart={e => { if (isVertical) e.currentTarget.classList.toggle('touch-active'); }}>
+        <div className={`post-card fade-in ${selected ? 'selected' : ''} ${isVertical ? 'card-vertical' : ''}`} onClick={() => onClick(post)} onTouchStart={e => { if (isVertical) e.currentTarget.classList.toggle('touch-active'); }}>
           <div className={`card-media ${ratioClass}`}>
-            {isVertical && <div className="card-blur-bg" />}
             {getMediaPreview()}
             <div className="card-overlay">
               <div className="overlay-title">{post.title}</div>
