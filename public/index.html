@@ -251,6 +251,8 @@
     .post-card.card-vertical .card-media { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     .post-card.card-vertical .card-media.ratio-9-16 { height: 100%; }
     .post-card.card-vertical .card-media img, .post-card.card-vertical .card-media video { object-fit: contain; background: #000; }
+    .card-blur-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(20px) brightness(0.6); transform: scale(1.1); z-index: 0; }
+    .post-card.card-vertical .card-media img, .post-card.card-vertical .card-media video { position: relative; z-index: 1; }
     .post-card.card-vertical .card-body {
       position: absolute; bottom: 0; left: 0; right: 0;
       background: linear-gradient(transparent, rgba(0,0,0,0.85));
@@ -839,6 +841,8 @@
       const media = post.media && post.media[0];
       const ratioClass = `ratio-${(post.aspect_ratio || '9:16').replace(':', '-')}`;
       const isVertical = (post.aspect_ratio || '9:16') === '9:16';
+      const cardRef = React.useRef(null);
+      React.useEffect(() => { if (isVertical && cardRef.current) { const img = cardRef.current.querySelector('.card-media img'); if (img) { const apply = () => { const bd = cardRef.current.querySelector('.card-blur-bg'); if (bd && img.src) bd.style.backgroundImage = 'url(' + img.src + ')'; }; if (img.complete && img.src) apply(); else img.addEventListener('load', apply); } } });
 
       function getMediaPreview() {
         if (!media) {
@@ -859,8 +863,9 @@
       }
 
       return (
-        <div className={`post-card fade-in ${selected ? 'selected' : ''} ${isVertical ? 'card-vertical' : ''}`} onClick={() => onClick(post)} onTouchStart={e => { if (isVertical) e.currentTarget.classList.toggle('touch-active'); }}>
+        <div ref={cardRef} className={`post-card fade-in ${selected ? 'selected' : ''} ${isVertical ? 'card-vertical' : ''}`} onClick={() => onClick(post)} onTouchStart={e => { if (isVertical) e.currentTarget.classList.toggle('touch-active'); }}>
           <div className={`card-media ${ratioClass}`}>
+            {isVertical && <div className="card-blur-bg" />}
             {getMediaPreview()}
             <div className="card-overlay">
               <div className="overlay-title">{post.title}</div>
