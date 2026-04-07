@@ -10,7 +10,7 @@ async function sendEmailNotification({ to, subject, html }) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'ContentFlow <notifications@neuluma.com>',
+      from: 'ContentFlow <notifications@neulumastudios.com>',
       to,
       subject,
       html,
