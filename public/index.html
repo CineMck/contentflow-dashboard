@@ -1,4 +1,4 @@
-{c.content.split(/(@\w[\w\s]*?)(?=\s@|$|[.,!?;:])/g).map((part, i) => part.startsWith("@") ? React.createElement("span", {key: i, className: "mention-highlight"}, part) : part)}html>
+{renderMentions(c.content)}html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -631,6 +631,21 @@
   <div id="root"></div>
 
   <script type="text/babel">
+    function renderMentions(text) {
+      if (!text || !text.includes('@')) return text;
+      const parts = [];
+      let remaining = text;
+      const regex = /@(\w[\w ]*?)(?=\s@|$|[.,!?;:])/g;
+      let match;
+      let lastIdx = 0;
+      while ((match = regex.exec(text)) !== null) {
+        if (match.index > lastIdx) parts.push(text.substring(lastIdx, match.index));
+        parts.push(React.createElement('span', {key: match.index, className: 'mention-highlight'}, match[0]));
+        lastIdx = match.index + match[0].length;
+      }
+      if (lastIdx < text.length) parts.push(text.substring(lastIdx));
+      return parts.length > 0 ? parts : text;
+    }
     const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
     // ========== SVG Icons ==========
