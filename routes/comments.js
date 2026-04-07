@@ -71,9 +71,28 @@ router.post('/:postId', authenticateToken, (req, res) => {
     // Notify post creator if different user
     if (post.created_by !== req.user.id) {
       db.prepare(`
-        INSERT INTO notifications (id, user_id, type, title, message, post_id)
-        VALUES (?, ?, 'comment', ?, ?, ?)
-      `).run(uuidv4(), post.created_by, 'comment', 'New Comment', `${req.user.name} commented on "${post.title}"`, post.id);
+        INSERT INTO notifications (id, user_id, type, message, post_id)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(uuidv4(), post.created_by, 'comment', `${req.user.name} commented on "${post.title}"`, req.params.postId);
+    }
+
+    // Notify @mentioned users
+    const mentionRegex = /@([\w\s]+?)(?=\s@|\s*$|[.,!?;:])/g;
+    let match;
+    const mentionedNames = new Set();
+    while ((match = mentionRegex.exec(content)) !== null) {
+      mentionedNames.add(match[1].trim());
+    }
+    if (mentionedNames.size > 0) {
+      const allUsers = db.prepare('SELECT id, name FROM users').all();
+      for (const user of allUsers) {
+        if (mentionedNames.has(user.name) && user.id !== req.user.id) {
+          db.prepare(`
+            INSERT INTO notifications (id, user_id, type, message, post_id)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(uuidv4(), user.id, 'mention', `${req.user.name} mentioned you in a comment on "${post.title}"`, req.params.postId);
+        }
+      }
     }
 
     // If replying, notify original commenter

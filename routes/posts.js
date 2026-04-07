@@ -501,6 +501,35 @@ router.post('/tags', authenticateToken, requireRole('super_admin', 'manager'), (
     if (!name) return res.status(400).json({ error: 'Tag name required' });
 
     const db = getDb();
+
+// PUT /api/posts/tags/:id
+router.put('/tags/:id', authenticateToken, requireRole('super_admin', 'manager'), (req, res) => {
+  try {
+    const { name, color } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name required' });
+    const db = getDb();
+    const existing = db.prepare('SELECT * FROM tags WHERE id = ?').get(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Tag not found' });
+    db.prepare('UPDATE tags SET name = ?, color = ? WHERE id = ?').run(name, color || existing.color, req.params.id);
+    res.json({ id: req.params.id, name, color: color || existing.color });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// DELETE /api/posts/tags/:id
+router.delete('/tags/:id', authenticateToken, requireRole('super_admin', 'manager'), (req, res) => {
+  try {
+    const db = getDb();
+    const existing = db.prepare('SELECT * FROM tags WHERE id = ?').get(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Tag not found' });
+    db.prepare('DELETE FROM post_tags WHERE tag_id = ?').run(req.params.id);
+    db.prepare('DELETE FROM tags WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
     const id = uuidv4();
     db.prepare('INSERT INTO tags (id, name, color) VALUES (?, ?, ?)').run(id, name, color || '#3B82F6');
 
