@@ -1632,7 +1632,7 @@
 
     async function handleUpdateTag(tagId) {
       try {
-        const updated = await api('/tags/' + tagId, {
+        const updated = await api('/posts/tags/' + tagId, {
           method: 'PUT', body: { name: editTagName, color: editTagColor }
         });
         setTags(prev => prev.map(t => t.id === tagId ? { ...t, name: editTagName, color: editTagColor } : t));
@@ -1646,7 +1646,7 @@
     async function handleDeleteTag(tagId, tagName) {
       if (!confirm('Delete tag "' + tagName + '"? This will remove it from all posts.')) return;
       try {
-        await api('/tags/' + tagId, { method: 'DELETE' });
+        await api('/posts/tags/' + tagId, { method: 'DELETE' });
         setTags(prev => prev.filter(t => t.id !== tagId));
       } catch (err) {
         console.error('Failed to delete tag', err);
