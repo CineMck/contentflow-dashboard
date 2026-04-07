@@ -502,6 +502,18 @@ router.post('/tags', authenticateToken, requireRole('super_admin', 'manager'), (
 
     const db = getDb();
 
+    const id = uuidv4();
+    db.prepare('INSERT INTO tags (id, name, color) VALUES (?, ?, ?)').run(id, name, color || '#3B82F6');
+
+    res.status(201).json({ id, name, color: color || '#3B82F6' });
+  } catch (err) {
+    if (err.message.includes('UNIQUE')) {
+      return res.status(409).json({ error: 'Tag already exists' });
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // PUT /api/posts/tags/:id
 router.put('/tags/:id', authenticateToken, requireRole('super_admin', 'manager'), (req, res) => {
   try {
@@ -530,18 +542,6 @@ router.delete('/tags/:id', authenticateToken, requireRole('super_admin', 'manage
     res.status(500).json({ error: 'Server error' });
   }
 });
-    const id = uuidv4();
-    db.prepare('INSERT INTO tags (id, name, color) VALUES (?, ?, ?)').run(id, name, color || '#3B82F6');
-
-    res.status(201).json({ id, name, color: color || '#3B82F6' });
-  } catch (err) {
-    if (err.message.includes('UNIQUE')) {
-      return res.status(409).json({ error: 'Tag already exists' });
-    }
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
 // === Notifications ===
 
 // GET /api/posts/notifications/mine
