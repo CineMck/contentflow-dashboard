@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{c.content.split(/(@\w[\w\s]*?)(?=\s@|$|[.,!?;:])/g).map((part, i) => part.startsWith("@") ? React.createElement("span", {key: i, className: "mention-highlight"}, part) : part)}html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -609,7 +609,23 @@
       .bulk-edit-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
       .bulk-edit-footer .change-count { color: var(--text-muted); font-size: 13px; }
 
-    </style>
+    
+    /* Tag management */
+    .tag-actions { display: flex; gap: 4px; margin-left: auto; }
+    .tag-edit-btn, .tag-delete-btn { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; transition: all 0.2s; }
+    .tag-edit-btn { background: var(--bg-hover); color: var(--text-secondary); }
+    .tag-edit-btn:hover { background: var(--primary); color: white; }
+    .tag-delete-btn { background: var(--bg-hover); color: var(--text-secondary); }
+    .tag-delete-btn:hover { background: #ef4444; color: white; }
+    .tag-edit-form { display: flex; gap: 8px; align-items: center; flex: 1; }
+    .tag-edit-form input[type="text"] { flex: 1; padding: 4px 8px; background: var(--bg-main); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 13px; }
+    .tag-edit-form input[type="color"] { width: 28px; height: 28px; border: none; border-radius: 4px; cursor: pointer; padding: 0; }
+    .mention-container { position: relative; }
+    .mention-dropdown { position: absolute; bottom: 100%; left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); max-height: 150px; overflow-y: auto; z-index: 100; box-shadow: 0 -4px 12px rgba(0,0,0,0.3); }
+    .mention-item { padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .mention-item:hover, .mention-item.active { background: var(--bg-hover); }
+    .mention-highlight { color: var(--primary); font-weight: 500; }
+</style>
 </head>
 <body>
   <div id="root"></div>
@@ -903,6 +919,15 @@
       const [activeTab, setActiveTab] = useState('details');
       const [comments, setComments] = useState([]);
       const [newComment, setNewComment] = useState('');
+      const [showMentions, setShowMentions] = useState(false);
+      const [mentionFilter, setMentionFilter] = useState('');
+      const [mentionIndex, setMentionIndex] = useState(0);
+      const [allUsers, setAllUsers] = useState([]);
+      const commentInputRef = React.useRef(null);
+
+      React.useEffect(() => {
+        api('/auth/users').then(users => setAllUsers(users || [])).catch(() => {});
+      }, []);
       const [mediaIndex, setMediaIndex] = useState(0);
       const [editing, setEditing] = useState(false);
       const [editMediaUrl, setEditMediaUrl] = useState('');
@@ -1194,7 +1219,54 @@
                   </div>
                   <form className="comment-input-row" onSubmit={handleAddComment}>
                     <Avatar name={user.name} color={user.avatar_color} size={32} />
-                    <input className="form-input" value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Write a comment..." />
+                    <div className="mention-container">
+                          {showMentions && mentionFilter !== '' && (
+                            <div className="mention-dropdown">
+                              {allUsers.filter(u => u.name.toLowerCase().includes(mentionFilter.toLowerCase())).slice(0, 5).map((u, i) => (
+                                <div key={u.id} className={"mention-item" + (i === mentionIndex ? " active" : "")} onClick={() => {
+                                  const beforeAt = newComment.substring(0, newComment.lastIndexOf('@'));
+                                  setNewComment(beforeAt + '@' + u.name + ' ');
+                                  setShowMentions(false);
+                                  setMentionFilter('');
+                                  commentInputRef.current && commentInputRef.current.focus();
+                                }}>
+                                  <Avatar name={u.name} color={u.avatar_color} size={24} />
+                                  <span>{u.name}</span>
+                                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{u.role}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <input ref={commentInputRef} className="form-input" value={newComment} onChange={e => {
+                            const val = e.target.value;
+                            setNewComment(val);
+                            const lastAt = val.lastIndexOf('@');
+                            if (lastAt !== -1 && (lastAt === 0 || val[lastAt-1] === ' ')) {
+                              const query = val.substring(lastAt + 1);
+                              if (!query.includes(' ') || query.length < 20) {
+                                setShowMentions(true);
+                                setMentionFilter(query);
+                                setMentionIndex(0);
+                              } else { setShowMentions(false); }
+                            } else { setShowMentions(false); }
+                          }} onKeyDown={e => {
+                            if (showMentions) {
+                              const filtered = allUsers.filter(u => u.name.toLowerCase().includes(mentionFilter.toLowerCase())).slice(0, 5);
+                              if (e.key === 'ArrowDown') { e.preventDefault(); setMentionIndex(i => Math.min(i+1, filtered.length-1)); }
+                              if (e.key === 'ArrowUp') { e.preventDefault(); setMentionIndex(i => Math.max(i-1, 0)); }
+                              if (e.key === 'Tab' || e.key === 'Enter') {
+                                if (filtered[mentionIndex]) {
+                                  e.preventDefault();
+                                  const beforeAt = newComment.substring(0, newComment.lastIndexOf('@'));
+                                  setNewComment(beforeAt + '@' + filtered[mentionIndex].name + ' ');
+                                  setShowMentions(false);
+                                  setMentionFilter('');
+                                }
+                              }
+                              if (e.key === 'Escape') { setShowMentions(false); }
+                            }
+                          }} placeholder="Write a comment... Use @ to mention users" />
+                        </div>
                     <button className="btn btn-primary btn-sm" type="submit">{Icons.send}</button>
                   </form>
                 </div>
@@ -1346,14 +1418,26 @@
                     <label className="form-label">Tags</label>
                     <div className="filter-tags">
                       {tags.map(t => (
-                        <span key={t.id} className={`filter-tag ${data.tags.includes(t.id) ? 'active' : ''}`}
-                          onClick={() => setData(d => ({
-                            ...d, tags: d.tags.includes(t.id) ? d.tags.filter(x => x !== t.id) : [...d.tags, t.id]
-                          }))}>
-                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: t.color, display: 'inline-block' }} />
-                          {t.name}
-                        </span>
-                      ))}
+                    <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+                      {editingTag === t.id ? (
+                        <div className="tag-edit-form">
+                          <input type="color" value={editTagColor} onChange={e => setEditTagColor(e.target.value)} />
+                          <input type="text" value={editTagName} onChange={e => setEditTagName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { handleUpdateTag(t.id); } if (e.key === 'Escape') { setEditingTag(null); } }} autoFocus />
+                          <button className="tag-edit-btn" onClick={() => handleUpdateTag(t.id)}>Save</button>
+                          <button className="tag-delete-btn" onClick={() => setEditingTag(null)}>Cancel</button>
+                        </div>
+                      ) : (
+                        <>
+                          <span style={{ width: 12, height: 12, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
+                          <span style={{ flex: 1 }}>{t.name}</span>
+                          <div className="tag-actions">
+                            <button className="tag-edit-btn" onClick={() => { setEditingTag(t.id); setEditTagName(t.name); setEditTagColor(t.color); }}>{Icons.edit} Edit</button>
+                            <button className="tag-delete-btn" onClick={() => handleDeleteTag(t.id, t.name)}>{Icons.trash} Delete</button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
                     </div>
                   </div>
                 )}
@@ -1528,6 +1612,33 @@
       const [viewMode, setViewMode] = useState('grid');
       const [selectedPosts, setSelectedPosts] = useState(new Set());
       const [showBulkEdit, setShowBulkEdit] = useState(false);
+    const [editingTag, setEditingTag] = useState(null);
+    const [editTagName, setEditTagName] = useState('');
+    const [editTagColor, setEditTagColor] = useState('');
+
+    async function handleUpdateTag(tagId) {
+      try {
+        const updated = await api('/tags/' + tagId, {
+          method: 'PUT', body: { name: editTagName, color: editTagColor }
+        });
+        setTags(prev => prev.map(t => t.id === tagId ? { ...t, name: editTagName, color: editTagColor } : t));
+        setEditingTag(null);
+      } catch (err) {
+        console.error('Failed to update tag', err);
+        alert('Failed to update tag');
+      }
+    }
+
+    async function handleDeleteTag(tagId, tagName) {
+      if (!confirm('Delete tag "' + tagName + '"? This will remove it from all posts.')) return;
+      try {
+        await api('/tags/' + tagId, { method: 'DELETE' });
+        setTags(prev => prev.filter(t => t.id !== tagId));
+      } catch (err) {
+        console.error('Failed to delete tag', err);
+        alert('Failed to delete tag');
+      }
+    }
       const [detailPost, setDetailPost] = useState(null);
       const [showCreate, setShowCreate] = useState(false);
       const [showNotifications, setShowNotifications] = useState(false);
