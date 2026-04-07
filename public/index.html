@@ -596,7 +596,30 @@
       .stats-bar { padding: 0 16px 12px; }
       .modal { max-width: 100%; margin: 8px; }
     }
-  </style>
+  
+      /* Bulk Edit Modal */
+      .bulk-edit-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+      .bulk-edit-modal { background: var(--bg-card); border-radius: var(--radius-lg); width: 95vw; max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
+      .bulk-edit-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+      .bulk-edit-header h2 { margin: 0; font-size: 18px; color: var(--text-primary); }
+      .bulk-edit-actions { display: flex; gap: 8px; }
+      .bulk-edit-body { flex: 1; overflow: auto; padding: 0; }
+      .bulk-edit-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .bulk-edit-table thead { position: sticky; top: 0; z-index: 2; }
+      .bulk-edit-table th { background: var(--bg-secondary); color: var(--text-secondary); padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--border); white-space: nowrap; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+      .bulk-edit-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+      .bulk-edit-table tr:hover td { background: var(--bg-card-hover); }
+      .bulk-edit-table input[type="text"], .bulk-edit-table textarea, .bulk-edit-table select { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 6px 8px; font-size: 13px; font-family: inherit; }
+      .bulk-edit-table input[type="text"]:focus, .bulk-edit-table textarea:focus, .bulk-edit-table select:focus { border-color: var(--border-focus); outline: none; box-shadow: 0 0 0 2px var(--accent-light); }
+      .bulk-edit-table textarea { resize: vertical; min-height: 60px; }
+      .bulk-edit-table .cell-title { min-width: 200px; } .bulk-edit-table .cell-caption { min-width: 250px; } .bulk-edit-table .cell-hashtags { min-width: 180px; } .bulk-edit-table .cell-platform { min-width: 120px; } .bulk-edit-table .cell-status { min-width: 130px; } .bulk-edit-table .cell-priority { min-width: 110px; } .bulk-edit-table .cell-url { min-width: 200px; }
+      .bulk-edit-table .cell-row-num { width: 40px; text-align: center; color: var(--text-muted); font-size: 12px; font-weight: 500; }
+      .bulk-edit-changed { background: var(--accent-light) !important; }
+      .bulk-edit-saving { opacity: 0.6; pointer-events: none; }
+      .bulk-edit-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+      .bulk-edit-footer .change-count { color: var(--text-muted); font-size: 13px; }
+
+    </style>
 </head>
 <body>
   <div id="root"></div>
@@ -1453,6 +1476,75 @@
     }
 
     // ========== Main Dashboard ==========
+    
+    function BulkEditModal({ posts, onClose, onSave, tags: allTags }) {
+      const [editData, setEditData] = React.useState(() => {
+        return posts.map(p => ({
+          id: p.id, title: p.title || '', caption: p.caption || '', hashtags: p.hashtags || '',
+          platform: p.platform || 'multi', status: p.status || 'pending', priority: p.priority || 'normal',
+          media_url: (p.media && p.media[0] && p.media[0].url) || '',
+          _orig: { title: p.title || '', caption: p.caption || '', hashtags: p.hashtags || '',
+            platform: p.platform || 'multi', status: p.status || 'pending', priority: p.priority || 'normal',
+            media_url: (p.media && p.media[0] && p.media[0].url) || '' }
+        }));
+      });
+      const [saving, setSaving] = React.useState(false);
+      const [saveMsg, setSaveMsg] = React.useState('');
+      function upd(i, f, v) { setEditData(prev => { const n = [...prev]; n[i] = { ...n[i], [f]: v }; return n; }); }
+      function chg(r) { return r.title !== r._orig.title || r.caption !== r._orig.caption || r.hashtags !== r._orig.hashtags || r.platform !== r._orig.platform || r.status !== r._orig.status || r.priority !== r._orig.priority || r.media_url !== r._orig.media_url; }
+      const cnt = editData.filter(chg).length;
+      async function doSave() {
+        const changed = editData.filter(chg);
+        if (!changed.length) { onClose(); return; }
+        setSaving(true); setSaveMsg('Saving...'); let ok = 0, fail = 0;
+        for (const row of changed) {
+          try {
+            const body = { title: row.title, caption: row.caption, hashtags: row.hashtags, platform: row.platform, status: row.status, priority: row.priority };
+            if (row.media_url !== row._orig.media_url) body.media_items = row.media_url ? [{ type: 'video', url: row.media_url }] : [];
+            await api('/posts/' + row.id, { method: 'PUT', body }); ok++;
+            setSaveMsg('Saved ' + ok + ' of ' + changed.length + '...');
+          } catch (e) { console.error(e); fail++; }
+        }
+        setSaving(false);
+        if (fail) { setSaveMsg(ok + ' saved, ' + fail + ' failed'); setTimeout(onSave, 1500); } else onSave();
+      }
+      const h = React.createElement;
+      const opts = (vals) => vals.map(v => h('option', { key: v[0], value: v[0] }, v[1]));
+      return h('div', { className: 'bulk-edit-overlay', onClick: e => { if (e.target === e.currentTarget) onClose(); } },
+        h('div', { className: 'bulk-edit-modal' + (saving ? ' bulk-edit-saving' : '') },
+          h('div', { className: 'bulk-edit-header' },
+            h('h2', null, Icons.edit, ' Bulk Edit \u2014 ', posts.length, ' Posts'),
+            h('div', { className: 'bulk-edit-actions' },
+              h('button', { className: 'btn btn-ghost btn-sm', onClick: onClose, disabled: saving }, Icons.close, ' Cancel'),
+              h('button', { className: 'btn btn-primary btn-sm', onClick: doSave, disabled: saving || !cnt },
+                saving ? 'Saving...' : ('Save ' + cnt + ' Change' + (cnt !== 1 ? 's' : ''))))),
+          h('div', { className: 'bulk-edit-body' },
+            h('table', { className: 'bulk-edit-table' },
+              h('thead', null, h('tr', null,
+                h('th', { className: 'cell-row-num' }, '#'),
+                h('th', { className: 'cell-title' }, 'Title'),
+                h('th', { className: 'cell-caption' }, 'Caption'),
+                h('th', { className: 'cell-hashtags' }, 'Hashtags'),
+                h('th', { className: 'cell-platform' }, 'Platform'),
+                h('th', { className: 'cell-status' }, 'Status'),
+                h('th', { className: 'cell-priority' }, 'Priority'),
+                h('th', { className: 'cell-url' }, 'Media URL'))),
+              h('tbody', null, editData.map((row, i) => h('tr', { key: row.id, className: chg(row) ? 'bulk-edit-changed' : '' },
+                h('td', { className: 'cell-row-num' }, i + 1),
+                h('td', { className: 'cell-title' }, h('input', { type: 'text', value: row.title, onChange: e => upd(i, 'title', e.target.value) })),
+                h('td', { className: 'cell-caption' }, h('textarea', { value: row.caption, rows: 2, onChange: e => upd(i, 'caption', e.target.value) })),
+                h('td', { className: 'cell-hashtags' }, h('input', { type: 'text', value: row.hashtags, onChange: e => upd(i, 'hashtags', e.target.value) })),
+                h('td', { className: 'cell-platform' }, h('select', { value: row.platform, onChange: e => upd(i, 'platform', e.target.value) }, opts([['multi','All Platforms'],['instagram','Instagram'],['tiktok','TikTok'],['youtube','YouTube'],['facebook','Facebook']]))),
+                h('td', { className: 'cell-status' }, h('select', { value: row.status, onChange: e => upd(i, 'status', e.target.value) }, opts([['draft','Draft'],['pending','Pending'],['in_review','In Review'],['needs_revision','Needs Revision'],['approved','Approved'],['scheduled','Scheduled'],['posted','Posted'],['rejected','Rejected']]))),
+                h('td', { className: 'cell-priority' }, h('select', { value: row.priority, onChange: e => upd(i, 'priority', e.target.value) }, opts([['low','Low'],['normal','Normal'],['high','High'],['urgent','Urgent']]))),
+                h('td', { className: 'cell-url' }, h('input', { type: 'text', value: row.media_url, onChange: e => upd(i, 'media_url', e.target.value) }))))))),
+          h('div', { className: 'bulk-edit-footer' },
+            h('span', { className: 'change-count' }, saveMsg || (cnt > 0 ? cnt + ' post' + (cnt !== 1 ? 's' : '') + ' modified' : 'No changes yet')),
+            h('div', { className: 'bulk-edit-actions' },
+              h('button', { className: 'btn btn-ghost btn-sm', onClick: onClose, disabled: saving }, 'Cancel'),
+              h('button', { className: 'btn btn-primary btn-sm', onClick: doSave, disabled: saving || !cnt }, saving ? 'Saving...' : ('Save ' + cnt + ' Change' + (cnt !== 1 ? 's' : '')))))));
+    }
+
     function Dashboard({ user, onLogout }) {
       const [posts, setPosts] = useState([]);
       const [total, setTotal] = useState(0);
@@ -1460,6 +1552,7 @@
       const [loading, setLoading] = useState(true);
       const [viewMode, setViewMode] = useState('grid');
       const [selectedPosts, setSelectedPosts] = useState(new Set());
+      const [showBulkEdit, setShowBulkEdit] = useState(false);
       const [detailPost, setDetailPost] = useState(null);
       const [showCreate, setShowCreate] = useState(false);
       const [showNotifications, setShowNotifications] = useState(false);
@@ -1831,6 +1924,7 @@
                 <button className="btn btn-success btn-sm" onClick={() => handleBulkAction('approve')}>{Icons.thumbUp} Approve All</button>
                 <button className="btn btn-danger btn-sm" onClick={() => handleBulkAction('reject')}>{Icons.thumbDown} Reject All</button>
                 <button className="btn btn-ghost btn-sm" onClick={() => handleBulkAction('needs_revision')}>Request Revision</button>
+                <button className="btn btn-primary btn-sm" onClick={() => setShowBulkEdit(true)} style={{ marginLeft: 8 }}>{Icons.edit} Bulk Edit</button>
                 <button className="btn btn-danger btn-sm" onClick={handleBulkDelete} style={{ marginLeft: 8 }}>{Icons.trash} Delete</button>
                 <button className="btn btn-ghost btn-sm" onClick={() => setSelectedPosts(new Set())}>{Icons.close} Clear</button>
               </div>
@@ -1838,6 +1932,15 @@
           </main>
 
           {/* Modals */}
+          {showBulkEdit && (
+            <BulkEditModal
+              posts={posts.filter(p => selectedPosts.has(p.id))}
+              onClose={() => setShowBulkEdit(false)}
+              onSave={() => { setShowBulkEdit(false); setSelectedPosts(new Set()); loadPosts(); }}
+              tags={tags}
+            />
+          )}
+
           {detailPost && (
             <PostDetailModal
               post={detailPost}
