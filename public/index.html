@@ -13,7 +13,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg-primary: #0a0e17;
+      --bg-primary: #0a0e17
       --bg-secondary: #111827;
       --bg-card: #1a2236;
       --bg-card-hover: #1f2a42;
@@ -1870,7 +1870,7 @@
 
       async function loadUsers() {
         try {
-          var res = await api("/api/auth/users");
+          var res = await api("/auth/users");
           var data = await res.json();
           setUsers(data);
         } catch(err) { console.error(err); }
@@ -1879,7 +1879,7 @@
       async function handleAddUser(e) {
         e.preventDefault();
         try {
-          await api("/api/auth/register", { method: "POST", body: JSON.stringify(form) });
+          await api("/auth/register", { method: "POST", body: JSON.stringify(form) });
           setForm({ email: "", password: "", name: "", role: "client" });
           setShowAdd(false);
           loadUsers();
@@ -1889,7 +1889,7 @@
       async function handleEditUser(e) {
         e.preventDefault();
         try {
-          await api("/api/auth/users/" + editingUser.id, { method: "PUT", body: JSON.stringify(editForm) });
+          await api("/auth/users/" + editingUser.id, { method: "PUT", body: JSON.stringify(editForm) });
           setEditingUser(null);
           loadUsers();
         } catch(err) { console.error(err); }
@@ -1898,7 +1898,7 @@
       async function handleDeleteUser(uid) {
         if (!confirm("Delete this user? This cannot be undone.")) return;
         try {
-          await api("/api/auth/users/" + uid, { method: "DELETE" });
+          await api("/auth/users/" + uid, { method: "DELETE" });
           loadUsers();
         } catch(err) { console.error(err); }
       }
@@ -1941,7 +1941,7 @@
         ),
         React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" } },
           React.createElement("h2", { style: { fontSize: "20px", fontWeight: "600" } }, "Users"),
-          currentUser.role === "super_admin" && React.createElement("button", { className: "btn-primary", onClick: function() { setShowAdd(!showAdd); } }, showAdd ? "Cancel" : "+ Add User")
+          currentUser.role === "super_admin" && React.createElement("button", { className: "btn btn-primary", style: { borderRadius: "12px", padding: "8px 18px", fontSize: "13px", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "6px" }, onClick: function() { setShowAdd(!showAdd); } }, showAdd ? "Cancel" : "+ Add User")
         ),
         showAdd && React.createElement("form", { onSubmit: handleAddUser, style: { marginBottom: "24px", padding: "20px", background: "var(--bg-secondary)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "12px" } },
           React.createElement("input", { type: "text", placeholder: "Name", value: form.name, onChange: function(e) { setForm(Object.assign({}, form, { name: e.target.value })); }, style: { padding: "10px 12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: "14px" } }),
