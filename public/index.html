@@ -630,22 +630,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    function renderMentions(text) {
-      if (!text) return text;
-      const parts = [];
-      const regex = /@(\w[\w ]*?)(?=\s@|$|[.,!?;:])/g;
-      let m;
-      let lastIdx = 0;
-      while ((m = regex.exec(text)) !== null) {
-        if (m.index > lastIdx) parts.push(text.substring(lastIdx, m.index));
-        parts.push(React.createElement('span', {key: m.index, className: 'mention-highlight'}, m[0]));
-        lastIdx = m.index + m[0].length;
-      }
-      if (lastIdx < text.length) parts.push(text.substring(lastIdx));
-      return parts.length > 0 ? parts : text;
-    }
-
-    function renderMentions(text) {
+ function renderMentions(text) {
       if (!text || !text.includes('@')) return text;
       const parts = [];
       let remaining = text;
