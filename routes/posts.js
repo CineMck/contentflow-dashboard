@@ -4,6 +4,7 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../database');
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const { notifyStatusChange } = require('../utils/notifications');
 
 const router = express.Router();
 
@@ -335,6 +336,9 @@ router.post('/:id/approve', authenticateToken, (req, res) => {
       createNotification(post.created_by, 'approval', 'Post Approved', `"${post.title}" has been approved`, post.id);
     }
 
+    // Send email notification
+    notifyStatusChange({ post, newStatus: 'approved', changedBy: req.user, db });
+
     res.json({ message: 'Post approved' });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
@@ -360,6 +364,9 @@ router.post('/:id/reject', authenticateToken, (req, res) => {
       createNotification(post.created_by, 'rejection', 'Post Rejected', reason || `"${post.title}" was rejected`, post.id);
     }
 
+    // Send email notification
+    notifyStatusChange({ post, newStatus: 'rejected', changedBy: req.user, db });
+
     res.json({ message: 'Post rejected' });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
@@ -384,6 +391,9 @@ router.post('/:id/request-revision', authenticateToken, (req, res) => {
     if (post.created_by !== req.user.id) {
       createNotification(post.created_by, 'revision', 'Revision Requested', note || `"${post.title}" needs revisions`, post.id);
     }
+
+    // Send email notification
+    notifyStatusChange({ post, newStatus: 'needs_revision', changedBy: req.user, db });
 
     res.json({ message: 'Revision requested' });
   } catch (err) {
