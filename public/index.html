@@ -470,16 +470,6 @@
     .login-logo-text span { color: var(--accent); }
     .login-subtitle { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
     .login-error { background: var(--danger-bg); color: var(--danger); padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 16px; text-align: center; }
-    .demo-accounts { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
-    .demo-accounts h4 { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
-    .demo-account-btn {
-      width: 100%; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); color: var(--text-primary); cursor: pointer;
-      display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
-      transition: all var(--transition); font-size: 13px;
-    }
-    .demo-account-btn:hover { border-color: var(--accent); background: var(--accent-light); }
-    .demo-account-role { font-size: 11px; color: var(--text-muted); margin-left: auto; }
 
     /* Version history */
     .version-list { display: flex; flex-direction: column; gap: 8px; }
@@ -723,11 +713,6 @@
       const [error, setError] = useState('');
       const [loading, setLoading] = useState(false);
 
-      const demoAccounts = [
-        { email: 'admin@contentflow.io', password: 'admin123', name: 'Sarah Chen', role: 'Super Admin' },
-        { email: 'manager@contentflow.io', password: 'manager123', name: 'Alex Rivera', role: 'Manager' },
-        { email: 'client@contentflow.io', password: 'client123', name: 'Jordan Taylor', role: 'Client' }
-      ];
 
       async function handleLogin(e, demoEmail, demoPass) {
         if (e) e.preventDefault();
@@ -772,16 +757,6 @@
               </button>
             </form>
 
-            <div className="demo-accounts">
-              <h4>Quick Demo Access</h4>
-              {demoAccounts.map(acc => (
-                <button key={acc.email} className="demo-account-btn" onClick={() => handleLogin(null, acc.email, acc.password)}>
-                  <Avatar name={acc.name} color={acc.role === 'Super Admin' ? '#3B82F6' : acc.role === 'Manager' ? '#8B5CF6' : '#10B981'} size={28} />
-                  <span>{acc.name}</span>
-                  <span className="demo-account-role">{acc.role}</span>
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       );
