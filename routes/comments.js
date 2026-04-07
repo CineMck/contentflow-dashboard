@@ -2,6 +2,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../database');
 const { authenticateToken } = require('../middleware/auth');
+const { notifyNewComment } = require('../utils/notifications');
 
 const router = express.Router();
 
@@ -91,6 +92,9 @@ router.post('/:postId', authenticateToken, (req, res) => {
       FROM comments c JOIN users u ON c.user_id = u.id
       WHERE c.id = ?
     `).get(id);
+
+    // Send email notification
+    notifyNewComment({ post, comment: { content }, commenter: req.user, db });
 
     newComment.replies = [];
 
