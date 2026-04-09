@@ -929,7 +929,7 @@
     }
 
     // ========== Post Detail Modal ==========
-    function PostDetailModal({ post, onClose, onUpdate, user }) {
+    function PostDetailModal({ post, onClose, onUpdate, user, tags }) {
       const [activeTab, setActiveTab] = useState('details');
       const [comments, setComments] = useState([]);
       const [newComment, setNewComment] = useState('');
@@ -950,7 +950,8 @@
         title: post.title, caption: post.caption || '', hashtags: post.hashtags || '',
         platform: post.platform, aspect_ratio: post.aspect_ratio, status: post.status,
         priority: post.priority, scheduled_date: post.scheduled_date || '',
-        media_items: (post.media || []).map(m => ({ type: m.type, url: m.url, filename: m.filename || '' }))
+        tags: (post.tags || []).map(t => t.id || t),
+              media_items: (post.media || []).map(m => ({ type: m.type, url: m.url, filename: m.filename || '' }))
       });
 
       useEffect(() => {
@@ -1119,6 +1120,25 @@
                         <input className="form-input" type="datetime-local" value={editData.scheduled_date ? editData.scheduled_date.slice(0,16) : ''} onChange={e => setEditData({...editData, scheduled_date: e.target.value})} />
                       </div>
                     </div>
+                    {tags && tags.length > 0 && (
+                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                        <label className="form-label">Tags</label>
+                        <div className="filter-tags">
+                          {tags.map(t => (
+                            <button
+                              key={t.id}
+                              type="button"
+                              className={"filter-tag" + (editData.tags.includes(t.id) ? " active" : "")}
+                              onClick={() => setEditData({...editData, tags: editData.tags.includes(t.id) ? editData.tags.filter(id => id !== t.id) : [...editData.tags, t.id]})}
+                              style={editData.tags.includes(t.id) ? { borderColor: t.color, background: t.color + '20' } : {}}
+                            >
+                              <span style={{ width: 8, height: 8, borderRadius: '50%', background: t.color, display: 'inline-block' }}></span>
+                              {t.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="form-group">
                       <label className="form-label">Media</label>
                       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
@@ -2051,6 +2071,7 @@
               onClose={() => setDetailPost(null)}
               onUpdate={() => { loadPosts(); openDetail(detailPost); }}
               user={user}
+              tags={tags}
             />
           )}
 
