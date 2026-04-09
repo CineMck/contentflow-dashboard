@@ -2,7 +2,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ContentFlow Ã¢ÂÂ Social Media Dashboard</title>
+  <title>ContentFlow — Social Media Dashboard</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
@@ -702,7 +702,7 @@
 
     // ========== Helpers ==========
     function formatDate(d) {
-      if (!d) return 'Ã¢ÂÂ';
+      if (!d) return '—';
       return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
     function formatTime(d) {
@@ -1170,13 +1170,13 @@
                     <div className="detail-info">
                       <div className="detail-field"><label>Title</label><p style={{ fontSize: 18, fontWeight: 700 }}>{post.title}</p></div>
                       <div className="detail-field"><label>Platform</label><p className={`platform-${post.platform}`}>{platformLabel(post.platform)}</p></div>
-                      <div className="detail-field"><label>Caption / Description</label><p style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}>{post.caption || 'Ã¢ÂÂ'}</p></div>
-                      <div className="detail-field"><label>Hashtags</label><p style={{ color: 'var(--accent)' }}>{post.hashtags || 'Ã¢ÂÂ'}</p></div>
+                      <div className="detail-field"><label>Caption / Description</label><p style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}>{post.caption || '—'}</p></div>
+                      <div className="detail-field"><label>Hashtags</label><p style={{ color: 'var(--accent)' }}>{post.hashtags || '—'}</p></div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                         <div className="detail-field"><label>Aspect Ratio</label><p>{post.aspect_ratio}</p></div>
                         <div className="detail-field"><label>Priority</label><p style={{ textTransform: 'capitalize' }}>{post.priority}</p></div>
                         <div className="detail-field"><label>Created By</label><p>{post.creator_name}</p></div>
-                        <div className="detail-field"><label>Scheduled</label><p>{post.scheduled_date ? formatDate(post.scheduled_date) : 'Ã¢ÂÂ'}</p></div>
+                        <div className="detail-field"><label>Scheduled</label><p>{post.scheduled_date ? formatDate(post.scheduled_date) : '—'}</p></div>
                       </div>
                       {post.tags && post.tags.length > 0 && (
                         <div className="detail-field">
@@ -1395,10 +1395,10 @@
                   <div className="form-group">
                     <label className="form-label">Aspect Ratio</label>
                     <select className="form-select" value={data.aspect_ratio} onChange={e => setData({...data, aspect_ratio: e.target.value})}>
-                      <option value="9:16">Vertical (9:16) Ã¢ÂÂ Reels / TikTok</option>
-                      <option value="16:9">Horizontal (16:9) Ã¢ÂÂ YouTube</option>
-                      <option value="1:1">Square (1:1) Ã¢ÂÂ Feed</option>
-                      <option value="4:5">Portrait (4:5) Ã¢ÂÂ Instagram</option>
+                      <option value="9:16">Vertical (9:16) — Reels / TikTok</option>
+                      <option value="16:9">Horizontal (16:9) — YouTube</option>
+                      <option value="1:1">Square (1:1) — Feed</option>
+                      <option value="4:5">Portrait (4:5) — Instagram</option>
                     </select>
                   </div>
                   <div className="form-group">
