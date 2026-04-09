@@ -1432,26 +1432,17 @@
                     <label className="form-label">Tags</label>
                     <div className="filter-tags">
                       {tags.map(t => (
-                    <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-                      {editingTag === t.id ? (
-                        <div className="tag-edit-form">
-                          <input type="color" value={editTagColor} onChange={e => setEditTagColor(e.target.value)} />
-                          <input type="text" value={editTagName} onChange={e => setEditTagName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { handleUpdateTag(t.id); } if (e.key === 'Escape') { setEditingTag(null); } }} autoFocus />
-                          <button className="tag-edit-btn" onClick={() => handleUpdateTag(t.id)}>Save</button>
-                          <button className="tag-delete-btn" onClick={() => setEditingTag(null)}>Cancel</button>
-                        </div>
-                      ) : (
-                        <>
-                          <span style={{ width: 12, height: 12, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
-                          <span style={{ flex: 1 }}>{t.name}</span>
-                          <div className="tag-actions">
-                            <button className="tag-edit-btn" onClick={() => { setEditingTag(t.id); setEditTagName(t.name); setEditTagColor(t.color); }}>{Icons.edit} Edit</button>
-                            <button className="tag-delete-btn" onClick={() => handleDeleteTag(t.id, t.name)}>{Icons.trash} Delete</button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
+                        <button
+                          key={t.id}
+                          type="button"
+                          className={"filter-tag" + (data.tags.includes(t.id) ? " active" : "")}
+                          onClick={() => setData({...data, tags: data.tags.includes(t.id) ? data.tags.filter(id => id !== t.id) : [...data.tags, t.id]})}
+                          style={data.tags.includes(t.id) ? { borderColor: t.color, background: t.color + '20' } : {}}
+                        >
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: t.color, display: 'inline-block' }}></span>
+                          {t.name}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
